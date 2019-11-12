@@ -67,3 +67,24 @@ SHUUP_ADMIN_DATETIME_INPUT_STEP = 15
 #: menu item. Useful in case there is need to always open some
 #: certain menus.
 SHUUP_ALWAYS_ACTIVE_MENU_CATEGORY_IDENTIFIERS = []
+
+#: Get front URL for admin panel navigation bar. Override
+#: for example for custom domain logic when admin panel is used
+#: from shared marketplace URL.
+SHUUP_ADMIN_NAVIGATION_GET_FRONT_URL_SPEC = ("shuup.admin.utils.urls.get_front_url")
+
+#: Indicates which objects select fields should load options asynchronously.
+#: When enabled, fields will load options through AJAX requests instead
+#: of generating them while rendering the page. For enviroments with huge amount of options
+#: in fields, like categories, it is best to have this enabled.
+#: When disabled, the options will be rendered on page load whenever it is possible, as
+#: in some features, the asynchronous load is not an option.
+#:
+SHUUP_ADMIN_LOAD_SELECT_OBJECTS_ASYNC = {
+    "categories": True,
+    "suppliers": True
+}
+
+#: Indicates the authentication form class that should be used in login views inside Admin
+#:
+SHUUP_ADMIN_AUTH_FORM_SPEC = ("shuup.admin.forms.EmailAuthenticationForm")

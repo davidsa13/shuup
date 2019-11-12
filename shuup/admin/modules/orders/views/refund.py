@@ -22,7 +22,7 @@ from shuup.core.excs import (
     InvalidRefundAmountException, NoRefundToCreateException,
     RefundExceedsAmountException
 )
-from shuup.core.models import Order, OrderLineType
+from shuup.core.models import Order, OrderLineType, Shop
 from shuup.utils.money import Money
 
 
@@ -66,6 +66,10 @@ class OrderCreateRefundView(UpdateView):
     context_object_name = "order"
     form_class = forms.formset_factory(RefundForm, extra=1)
 
+    def get_queryset(self):
+        shop_ids = Shop.objects.get_for_user(self.request.user).values_list("id", flat=True)
+        return Order.objects.exclude(deleted=True).filter(shop_id__in=shop_ids)
+
     def get_context_data(self, **kwargs):
         context = super(OrderCreateRefundView, self).get_context_data(**kwargs)
         context["title"] = _("Create Refund -- %s") % context["order"]
@@ -99,7 +103,10 @@ class OrderCreateRefundView(UpdateView):
         lines = lines = self.object.lines.all()
         if supplier:
             lines = lines.filter(supplier=supplier)
-        context["json_line_data"] = [self._get_line_data(self.object, line) for line in lines]
+        context["json_line_data"] = {
+            line.ordering: self._get_line_data(self.object, line)
+            for line in lines
+        }
         return context
 
     def _get_line_data(self, order, line):
@@ -157,11 +164,17 @@ class OrderCreateRefundView(UpdateView):
             line_number_choices += [("amount", _("Refund arbitrary amount"))]
         return line_number_choices + [
             (line.ordering, self._get_line_text(line)) for line in lines
-            if (line.type == OrderLineType.PRODUCT and line.max_refundable_quantity > 0) or
-            (line.type != OrderLineType.PRODUCT and
-             line.max_refundable_amount.value > 0 and
-             line.max_refundable_quantity > 0) and
-            line.type != OrderLineType.REFUND
+            if (
+                (
+                    (line.type == OrderLineType.PRODUCT and line.max_refundable_quantity > 0) or
+                    (
+                        line.type != OrderLineType.PRODUCT and
+                        line.max_refundable_amount.value > 0 and
+                        line.max_refundable_quantity > 0
+                    )
+                ) and
+                line.type != OrderLineType.REFUND
+            )
         ]
 
     def get_form(self, form_class=None):
@@ -232,6 +245,10 @@ class OrderCreateFullRefundView(UpdateView):
     template_name = "shuup/admin/orders/create_full_refund.jinja"
     context_object_name = "order"
     form_class = FullRefundConfirmationForm
+
+    def get_queryset(self):
+        shop_ids = Shop.objects.get_for_user(self.request.user).values_list("id", flat=True)
+        return Order.objects.exclude(deleted=True).filter(shop_id__in=shop_ids)
 
     def get_context_data(self, **kwargs):
         context = super(OrderCreateFullRefundView, self).get_context_data(**kwargs)
