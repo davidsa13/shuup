@@ -37,15 +37,12 @@ def test_set_customer_with_custom_basket_lines(rf):
 
         base_unit_price = basket.shop.create_price("10.99")
 
-        basket.add_line(
-            text="Custom Line",
-            type=OrderLineType.OTHER,
-            line_id="random-you-know",
-            shop=basket.shop,
-            quantity=1,
-            base_unit_price=base_unit_price,
-            extra={"this is purely extra": "oh is it"}
-        )
+        basket.add_line(text="Custom Line",
+                        type=OrderLineType.OTHER,
+                        line_id="random-you-know",
+                        shop=basket.shop,
+                        quantity=1,
+                        base_unit_price=base_unit_price)
 
         basket.customer = customer
         assert basket.customer_comment is None
@@ -60,8 +57,6 @@ def test_set_customer_with_custom_basket_lines(rf):
         assert basket.customer_comment == "Some comment"
         assert basket.shipping_method == shipping_method
         assert basket.payment_method == payment_method
-        assert len(basket.get_lines()) == 1
-        assert basket.get_lines()[0].data["extra"]["this is purely extra"] == "oh is it"
 
 
 @pytest.mark.django_db

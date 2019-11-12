@@ -9,8 +9,6 @@ import json
 
 import pytest
 import reversion
-
-import django.template
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.test.utils import override_settings
@@ -67,22 +65,12 @@ def test_resource_injection(client):
         name="RequiredCookies",
         how_is_used="to make the site work"
     )
-    default_active_cookie_category = GDPRCookieCategory.objects.create(
-        shop=shop,
-        always_active=False,
-        default_active=True,
-        cookies="analyticsCookie",
-        name="Analytics",
-        how_is_used="to track users"
-    )
-    response, soup = client.response_and_soup(index_url)
+    response = client.get(index_url)
     response_content = response.content.decode("utf-8")
     assert "gdpr-consent-warn-bar" in response_content
     assert cookie_category.cookies in response_content
     assert cookie_category.name in response_content
     assert cookie_category.how_is_used in response_content
-    default_active_input = soup.find("input", {"name": "cookie_category_%d" % default_active_cookie_category.pk})
-    assert default_active_input.has_attr("checked")
 
     # make sure no other shop has this
     with override_settings(SHUUP_ENABLE_MULTIPLE_SHOPS=True):
@@ -130,7 +118,7 @@ def test_update_injection():
 
 
 @pytest.mark.django_db
-def test_consent_cookies(rf):
+def test_consent_cookies():
     """
     Test that the GDPR consent is generated and saved into a cooki
     """
@@ -163,14 +151,6 @@ def test_consent_cookies(rf):
             name="OptionalCookies",
             how_is_used="to spy users"
         )
-        default_active_cookie_category = GDPRCookieCategory.objects.create(
-            shop=shop,
-            always_active=False,
-            default_active=True,
-            cookies="_analytics",
-            name="Analytics",
-            how_is_used="to track users"
-        )
 
         # create privacy policy GDPR document
         privacy_policy = ensure_gdpr_privacy_policy(shop)
@@ -180,8 +160,7 @@ def test_consent_cookies(rf):
         # send consent
         response = client.post(reverse("shuup:gdpr_consent"), data={
             "cookie_category_{}".format(required_cookie_category.id): "on",
-            "cookie_category_{}".format(optional_cookie_category.id): "on",
-            "cookie_category_{}".format(default_active_cookie_category.id): "on",
+            "cookie_category_{}".format(optional_cookie_category.id): "on"
         })
 
         assert settings.SHUUP_GDPR_CONSENT_COOKIE_NAME in response.cookies
@@ -193,22 +172,3 @@ def test_consent_cookies(rf):
             assert cookie in cookies_data["cookies"]
         for cookie in optional_cookie_category.cookies.split(","):
             assert cookie in cookies_data["cookies"]
-        for cookie in default_active_cookie_category.cookies.split(","):
-            assert cookie in cookies_data["cookies"]
-
-        engine = django.template.engines['jinja2']
-        template = engine.from_string("{{ gdpr.get_accepted_cookies()|json }}")
-
-        request = rf.get("/")
-        context = {'request': request}
-        rendered_cookies = json.loads(template.render(context))
-        assert rendered_cookies == []
-
-        request.COOKIES = {
-            settings.SHUUP_GDPR_CONSENT_COOKIE_NAME: (
-                response.client.cookies[settings.SHUUP_GDPR_CONSENT_COOKIE_NAME].value
-            )
-        }
-        context = {'request': request}
-        rendered_cookies = set(json.loads(template.render(context)))
-        assert rendered_cookies == set(['_opt2', 'cookie1', '_cookie3', '_opt3', '_analytics', 'cookir2', '_opt1'])

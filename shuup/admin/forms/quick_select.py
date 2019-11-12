@@ -7,8 +7,6 @@
 # LICENSE file in the root directory of this source tree.
 import django
 
-from ._quick_select import NoModel
-
 if django.VERSION < (1, 11):
     from ._quick_select import (
         QuickAddRelatedObjectMultiSelectWithoutTemplate as QuickAddRelatedObjectMultiSelect,
@@ -21,7 +19,6 @@ else:
 
 
 __all__ = [
-    "NoModel",
     "QuickAddRelatedObjectMultiSelect",
     "QuickAddRelatedObjectSelect"
 ]

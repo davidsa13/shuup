@@ -10,8 +10,7 @@ from __future__ import unicode_literals
 import six
 from django.conf import settings
 from django.contrib import messages
-from django.core.exceptions import ImproperlyConfigured, ValidationError
-from django.db.transaction import atomic
+from django.core.exceptions import ImproperlyConfigured
 from django.forms import BaseFormSet
 from django.http import HttpResponseRedirect
 from django.utils.encoding import force_text
@@ -19,7 +18,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.views.generic import ListView, UpdateView
 
 from shuup.admin.modules.settings.view_settings import ViewSettings
-from shuup.admin.signals import object_created, object_saved, view_form_valid
+from shuup.admin.signals import object_created, object_saved
 from shuup.admin.toolbar import (
     get_default_edit_toolbar, NewActionButton, SettingsActionButton, Toolbar
 )
@@ -120,18 +119,10 @@ class CreateOrUpdateView(UpdateView):
             kwargs["languages"] = settings.LANGUAGES
         return kwargs
 
-    @atomic()
     def form_valid(self, form):
         # This implementation is an amalgamation of
         # * django.views.generic.edit.ModelFormMixin#form_valid
         # * django.views.generic.edit.FormMixin#form_valid
-
-        # trigger signal for extra form validations
-        try:
-            view_form_valid.send(sender=type(self), view=self, form=form, request=self.request)
-        except ValidationError:
-            return self.form_invalid(form)
-
         is_new = (not self.object.pk)
         self.save_form(form)
         if is_new:

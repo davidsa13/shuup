@@ -17,7 +17,6 @@ from shuup.testing.factories import (
 @pytest.mark.django_db
 def test_default_supplier():
     supplier = get_default_supplier()
-    assert supplier.slug == supplier.name.lower()
     shop_product = get_default_shop_product()
     product = shop_product.product
     assert supplier.get_stock_statuses([product.id])[product.id].logical_count == 0

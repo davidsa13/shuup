@@ -7,7 +7,6 @@
 import os
 from decimal import Decimal
 
-import mock
 import pytest
 from django.conf import settings
 from django.utils.encoding import force_text
@@ -18,7 +17,6 @@ from shuup.core.models import (
     Category, Manufacturer, MediaFile, Product, ShopProduct
 )
 from shuup.default_importer.importers import ProductImporter
-from shuup.importer.importing import DataImporter
 from shuup.importer.transforms import transform_file
 from shuup.importer.utils.importer import ImportMode
 from shuup.simple_supplier.models import StockAdjustment
@@ -473,9 +471,3 @@ def test_complex_import():
 
         if data.get("manufacturer"):
             assert product.manufacturer.name == data["manufacturer"]
-
-
-def test_custom_transform_file():
-    with mock.patch.object(DataImporter, "custom_file_transformer", True):
-        with pytest.raises(NotImplementedError):
-            DataImporter.transform_file("fake", "file name")

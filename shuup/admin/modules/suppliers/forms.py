@@ -22,7 +22,7 @@ from shuup.core.models import MutableAddress, Shop, Supplier
 class SupplierBaseForm(ShuupAdminForm):
     class Meta:
         model = Supplier
-        exclude = ("module_data", "options", "contact_address", "deleted")
+        exclude = ("module_data", "options", "contact_address")
         widgets = {
             "module_identifier": forms.Select,
             "description": TextEditorWidget()

@@ -858,8 +858,7 @@ class Order(MoneyPropped, models.Model):
                     parent_line=parent_line,
                     ordering=index,
                     base_unit_price_value=-(base_amount / (quantity or 1)),
-                    quantity=quantity,
-                    supplier=parent_line.supplier
+                    quantity=quantity
                 )
                 for line_tax in parent_line.taxes.all():
                     tax_base_amount = amount / (1 + parent_line.tax_rate)
@@ -915,10 +914,7 @@ class Order(MoneyPropped, models.Model):
 
     def get_total_unrefunded_amount(self, supplier=None):
         if supplier:
-            total = sum([
-                line.max_refundable_amount.value
-                for line in self.lines.filter(supplier=supplier).exclude(type=OrderLineType.REFUND)
-            ])
+            total = sum([line.max_refundable_amount.value for line in self.lines.filter(supplier=supplier)])
             return (Money(total, self.currency) if total else Money(0, self.currency))
         return max(self.taxful_total_price.amount, Money(0, self.currency))
 

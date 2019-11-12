@@ -15,7 +15,6 @@ import itertools
 from django.conf import settings
 from django.core.urlresolvers import NoReverseMatch, reverse
 from django.middleware.csrf import get_token
-from django.utils.lru_cache import lru_cache
 from django.utils.text import force_text
 from jinja2.utils import contextfunction
 
@@ -29,7 +28,6 @@ from shuup.admin.utils.urls import manipulate_query_string, NoModelUrl
 from shuup.apps.provides import get_provide_objects
 from shuup.core.models import Shop
 from shuup.core.telemetry import is_telemetry_enabled
-from shuup.utils.importing import cached_load
 
 __all__ = ["get_menu_entry_categories", "get_front_url", "get_config", "model_url"]
 
@@ -47,14 +45,7 @@ def get_menu_entry_categories(context):
     return menu.get_menu_entry_categories(request=context["request"])
 
 
-@lru_cache()
-def get_all_target_urls(request, target_url, breadcrumbs):
-    breadcrumbs_entries = (breadcrumbs.get_entries(request) or [] if breadcrumbs else [])
-    return [entry.url for entry in breadcrumbs_entries] + [target_url]
-
-
-@contextfunction
-def is_menu_category_active(context, category, target_url, breadcrumbs=None):
+def is_menu_category_active(category, target_url):
     def does_identifier_match(always_active_identifier):
         return (force_text(category.identifier) == force_text(always_active_identifier))
 
@@ -62,13 +53,7 @@ def is_menu_category_active(context, category, target_url, breadcrumbs=None):
     if any([identifier for identifier in identifiers if does_identifier_match(identifier)]):
         return True
 
-    all_target_urls = get_all_target_urls(context["request"], target_url, breadcrumbs)
-    return any([entry for entry in category.entries if entry.url in all_target_urls])
-
-
-@contextfunction
-def is_menu_item_active(context, entry_url, target_url, breadcrumbs=None):
-    return bool(entry_url in get_all_target_urls(context["request"], target_url, breadcrumbs))
+    return any([entry for entry in category.entries if entry.url == target_url])
 
 
 @contextfunction
@@ -82,7 +67,13 @@ def get_menu_entries(context):
 
 @contextfunction
 def get_front_url(context):
-    return cached_load("SHUUP_ADMIN_NAVIGATION_GET_FRONT_URL_SPEC")(context)
+    front_url = context.get("front_url")
+    if not front_url:
+        try:
+            front_url = reverse("shuup:index")
+        except NoReverseMatch:
+            front_url = None
+    return front_url
 
 
 @contextfunction

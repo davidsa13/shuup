@@ -7,8 +7,6 @@
 # LICENSE file in the root directory of this source tree.
 import pytest
 
-from django.test import override_settings
-
 from shuup.apps.provides import override_provides
 from shuup.testing.factories import get_default_shop
 from shuup.xtheme.resources import add_resource, InlineScriptResource
@@ -34,8 +32,3 @@ def test_simple_addon_injection():
             output = template.render(request=request)
             head, body = output.split("</head>", 1)
             assert "window.injectedFromAddon=true;" in body
-
-            with override_settings(SHUUP_XTHEME_EXCLUDE_TEMPLATES_FROM_RESOUCE_INJECTION=["resinject.jinja"]):
-                output = template.render(request=request)
-                head, body = output.split("</head>", 1)
-                assert "window.injectedFromAddon=true;" not in body

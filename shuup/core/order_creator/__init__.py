@@ -10,9 +10,7 @@ from shuup.utils import update_module_attributes
 
 from ._creator import OrderCreator
 from ._modifier import OrderModifier
-from ._source import (
-    OrderLineBehavior, OrderSource, SourceLine, TaxesNotCalculated
-)
+from ._source import OrderSource, SourceLine, TaxesNotCalculated
 from ._source_modifier import (
     get_order_source_modifier_modules, is_code_usable,
     OrderSourceModifierModule
@@ -33,8 +31,7 @@ __all__ = [
     "OrderSourceMinTotalValidator",
     "OrderSourceSupplierValidator",
     "SourceLine",
-    "TaxesNotCalculated",
-    "OrderLineBehavior"
+    "TaxesNotCalculated"
 ]
 
 update_module_attributes(__all__, __name__)
